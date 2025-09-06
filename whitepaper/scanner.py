@@ -125,30 +125,46 @@ def scan_files(paths: list[Path]):
     """Scan multiple files with rich progress and print per-file reports + final summary."""
     results = []
     total = len(paths)
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(),
-        transient=True,
-        console=console,
-    ) as progress:
-        task = progress.add_task("Scanning datasets...", total=total)
-        for p in paths:
-            progress.update(task, description=f"🔎 Reading {p.name}")
-            with console.status(f"Reading {p.name}", spinner="dots"):
+
+    # Use progress bar for multiple files, simple status for single files
+    if len(paths) > 1:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            transient=True,
+            console=console,
+        ) as progress:
+            task = progress.add_task("Scanning datasets...", total=total)
+            for p in paths:
+                progress.update(task, description=f"🔎 Reading {p.name}")
                 try:
                     analysis = analyze_file(p)
                 except Exception as e:
                     console.print(f"[red]❌ Failed to read {p.name}: {e}")
                     analysis = {"file": p.name, "error": str(e)}
+                if "error" in analysis:
+                    console.print(Panel(f"Error analyzing {p.name}: {analysis['error']}", style="red"))
+                else:
+                    pretty_print(analysis)
+                    results.append(analysis)
+                progress.advance(task)
+    else:
+        # Single file - avoid live display conflicts
+        for p in paths:
+            console.print(f"🔎 Reading {p.name}...")
+            try:
+                analysis = analyze_file(p)
+            except Exception as e:
+                console.print(f"[red]❌ Failed to read {p.name}: {e}")
+                analysis = {"file": p.name, "error": str(e)}
             if "error" in analysis:
                 console.print(Panel(f"Error analyzing {p.name}: {analysis['error']}", style="red"))
             else:
                 pretty_print(analysis)
                 results.append(analysis)
-            progress.advance(task)
 
     if results:
         avg_quality = round(sum(r["quality"] for r in results) / len(results), 1)

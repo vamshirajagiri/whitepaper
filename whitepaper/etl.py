@@ -68,12 +68,18 @@ def etl_file(file_path: Path, detailed=True):
         console.print(f"[red]Failed to read {file_path.name}: {e}[/red]")
         return None
 
+    # Check if file is already cleaned and warn user
+    is_already_cleaned = "_cleaned" in file_path.stem
+    if is_already_cleaned:
+        console.print(f"[yellow]⚠️ Warning: {file_path.name} appears to be already cleaned![/yellow]")
+        console.print("[yellow]As per your request, re-processing and saving with incremental numbering...[/yellow]")
+
     # Pre-ETL summary
     missing = df.isna().sum().sum()
     duplicates = df.duplicated().sum()
     rows, cols = df.shape
     quality_before = calculate_quality(df)
-    
+
     if detailed:
         console.print(Panel(f"🤖 ETL Agent starting for [bold]{file_path.name}[/bold]\n"
                             f"Rows: {rows} | Columns: {cols}\n"
@@ -98,7 +104,20 @@ def etl_file(file_path: Path, detailed=True):
             if step == "Outlier Detection":
                 outliers = flag_outliers(df)
             elif step == "Saving":
-                cleaned_file = CLEANED_DIR / f"{file_path.stem}_cleaned.csv"
+                # Smart file naming for re-processed files
+                if is_already_cleaned:
+                    # Find the next available incremental number
+                    base_name = file_path.stem.replace('_cleaned', '')
+                    counter = 1
+                    while True:
+                        cleaned_file = CLEANED_DIR / f"{base_name}_cleaned({counter}).csv"
+                        if not cleaned_file.exists():
+                            break
+                        counter += 1
+                    console.print(f"[green]💾 Saving as: {cleaned_file.name}[/green]")
+                else:
+                    cleaned_file = CLEANED_DIR / f"{file_path.stem}_cleaned.csv"
+
                 df.to_csv(cleaned_file, index=False)
             else:
                 df = clean_dataframe(df)
@@ -117,12 +136,12 @@ def etl_file(file_path: Path, detailed=True):
         table.add_row("Outliers flagged", str(sum(outlier_counts.values())), str(sum(outlier_counts.values())))
         table.add_row("Quality Score", str(quality_before), str(quality_after))
         console.print(table)
-    
+
     # Red flag if quality low
     if quality_after < QUALITY_WARNING_THRESHOLD:
         console.print(Panel(f"⚠️ Dataset [bold]{file_path.name}[/bold] has low quality after ETL.\n"
                             f"Consider reviewing before policymaking.", style="bold red"))
-    
+
     return df
 
 def etl_files(paths: List[Path]):
