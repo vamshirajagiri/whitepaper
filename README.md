@@ -2,12 +2,12 @@
 
 **AI-Powered Data Analysis Terminal for Policy Makers & Analysts**
 
- CLI tool that combines traditional command-line operations with advanced AI multi-agent analysis for government datasets. Experience the future of data analysis with intelligent automation and natural language interaction.
+CLI tool that combines traditional command-line operations with advanced AI multi-agent analysis for government datasets. Experience the future of data analysis with intelligent automation and natural language interaction.
 
 ## ✨ Key Features
 
 - 🚀 **Unified CLI Experience** - Commands + Natural Language in one interface
-- 🤖 **Multi-Agent AI System** -  specialized AI agents working collaboratively
+- 🤖 **Multi-Agent AI System** - specialized AI agents working collaboratively
 - 📊 **Intelligent Data Processing** - Automated ETL pipeline with quality checks
 - 🔍 **Policy-Focused Analysis** - Deep insights for government decision-making
 - 📈 **ASCII Visualizations** - Beautiful charts and animations in terminal
@@ -39,6 +39,7 @@ whitepaper
 ## 💡 Usage Examples
 
 ### Commands (Traditional CLI)
+
 ```bash
 whitepaper> scan agricultural_2019_6.csv
 whitepaper> etl
@@ -47,6 +48,7 @@ whitepaper> status
 ```
 
 ### Natural Language Queries
+
 ```bash
 whitepaper> Analyze agricultural trends and provide policy recommendations
 whitepaper> What are the consumption patterns in the dataset?
@@ -54,9 +56,14 @@ whitepaper> Give me insights about economic indicators
 whitepaper> Show me correlations in the data
 ```
 
+## Here's the demo for this project
+
+[![asciicast](https://asciinema.org/a/7RFxJEZ2cvMhQFbs1ZNBCqVdb.svg)](https://asciinema.org/a/7RFxJEZ2cvMhQFbs1ZNBCqVdb)
+
 ## 🏗️ Enterprise Architecture
 
 ### Elite AI Policy Analyst System
+
 - **🏛️ Enterprise Policy Analyst** - Deterministic, hallucination-free analysis
 - **🔒 Consistency Engine** - Hash-based caching for identical results
 - **🛡️ Quality Assurance** - Multi-layer validation and fact-checking
@@ -64,6 +71,7 @@ whitepaper> Show me correlations in the data
 - **🎯 Cross-Sector Intelligence** - Multi-dataset correlation analysis
 
 ### Technology Stack
+
 - **AI/ML**: LangChain, LangGraph, OpenAI GPT-4
 - **Vector DB**: FAISS + ChromaDB for persistent storage
 - **Data Processing**: pandas, numpy, scikit-learn
@@ -73,14 +81,14 @@ whitepaper> Show me correlations in the data
 
 ## 📋 Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `scan <files>` | Scan datasets for quality analysis (works with raw/cleaned) |
-| `etl <files>` | Run ETL cleaning pipeline (intelligently finds files) |
-| `list` / `datasets` | Show all available datasets (raw + cleaned) |
-| `status` | Display system status |
-| `help` | Show help information |
-| `exit` | Exit the terminal |
+| Command             | Description                                                 |
+| ------------------- | ----------------------------------------------------------- |
+| `scan <files>`      | Scan datasets for quality analysis (works with raw/cleaned) |
+| `etl <files>`       | Run ETL cleaning pipeline (intelligently finds files)       |
+| `list` / `datasets` | Show all available datasets (raw + cleaned)                 |
+| `status`            | Display system status                                       |
+| `help`              | Show help information                                       |
+| `exit`              | Exit the terminal                                           |
 
 ## 🎨 Natural Language Examples
 
@@ -101,6 +109,7 @@ OPENAI_API_KEY=your-api-key-here
 ## 📊 Sample Datasets
 
 The tool comes with sample government datasets:
+
 - `agricultural_2019_6.csv` - Agricultural production data
 - `consumption_detail_06_2021_general_purpose.csv` - Consumption patterns
 
