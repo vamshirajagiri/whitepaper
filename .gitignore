@@ -141,7 +141,7 @@ dmypy.json
 .LSOverride
 
 # Data files (unless needed for demo)
-# *.csv
+*.csv
 *.xlsx
 *.json
 *.xml
@@ -149,5 +149,30 @@ dmypy.json
 # Temporary files
 requirements\ 2.txt
 
-//python3 -m venv .venv
-//source .venv/bin/activate
+# Environment files
+.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Database files
+*.sqlite3
+*.db
+
+# AI/ML model files and databases
+.whitepaper_vector_db/
+vector_db/
+models/
+*.pkl
+*.model
+
+# Cleaned datasets and processed files
+cleaned-dataset/
+processed-data/
+output/
+
+# Demo and test files
+demo.py
+test_*.py
+example_*.py
