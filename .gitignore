@@ -141,10 +141,13 @@ dmypy.json
 .LSOverride
 
 # Data files (unless needed for demo)
-*.csv
+# *.csv
 *.xlsx
 *.json
 *.xml
 
 # Temporary files
 requirements\ 2.txt
+
+//python3 -m venv .venv
+//source .venv/bin/activate
