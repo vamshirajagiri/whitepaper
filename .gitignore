@@ -148,3 +148,6 @@ dmypy.json
 
 # Temporary files
 requirements\ 2.txt
+
+//python3 -m venv .venv
+//source .venv/bin/activate
