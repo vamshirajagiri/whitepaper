@@ -141,7 +141,7 @@ dmypy.json
 .LSOverride
 
 # Data files (unless needed for demo)
-*.csv
+# *.csv
 *.xlsx
 *.json
 *.xml
