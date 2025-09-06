@@ -1,64 +1,54 @@
 # whitepaper/shell.py
-import cmd
 from pathlib import Path
-from .utils import console, is_tabular
+from rich.console import Console
 from .scanner import scan_files
+from .etl import etl_files
 
-class WhitepaperShell(cmd.Cmd):
-    intro = "Type 'help' to see available commands. Type 'exit' to quit."
-    prompt = "whitepaper > "
+console = Console()
 
-    def do_scan(self, arg: str):
-        """Scan datasets.
-Usage:
-  scan                -> scans all CSV/XLS/XLSX files in cwd
-  scan file1 file2    -> scans only provided files (relative or absolute)"""
-        args = arg.split()
-        paths = []
-        if args:
-            for a in args:
-                p = Path(a)
-                if not p.exists():
-                    console.print(f"[yellow]⚠ {a} does not exist; skipping.")
+class WhitepaperShell:
+    def __init__(self):
+        self.active = True
+        console.print("🤖 Whitepaper Shell is ready. Type commands ('help' for list).", style="bold green")
+
+    def run(self):
+        while self.active:
+            try:
+                cmd = console.input("[bold cyan]whitepaper>[/bold cyan] ").strip()
+                if not cmd:
                     continue
-                if not is_tabular(p):
-                    console.print(f"[yellow]⚠ {a} is not .csv/.xls/.xlsx; skipping.")
-                    continue
-                paths.append(p)
-        else:
-            cwd = Path.cwd()
-            paths = sorted([f for f in cwd.glob("*.csv")] + [f for f in cwd.glob("*.xls")] + [f for f in cwd.glob("*.xlsx")])
+                args = cmd.split()
+                command = args[0].lower()
 
-        if not paths:
-            console.print("[yellow]No dataset files found to scan (CSV/XLS/XLSX)")
-            return
+                if command == "exit":
+                    self.active = False
+                    console.print("👋 Exiting Whitepaper Shell...", style="bold green")
 
-        console.print(f"📂 Found {len(paths)} file(s) to scan.")
-        scan_files(paths)
+                elif command == "scan":
+                    files = args[1:] if len(args) > 1 else None
+                    paths = [Path(f) for f in files] if files else list(Path(".").glob("*.csv")) + list(Path(".").glob("*.xls*"))
+                    scan_files(paths)
 
-    def do_list(self, arg: str):
-        """List CSV/XLS/XLSX files in current folder."""
-        p = Path.cwd()
-        files = sorted([f for f in p.glob("*.csv")] + [f for f in p.glob("*.xls")] + [f for f in p.glob("*.xlsx")])
-        if not files:
-            console.print("[yellow]No dataset files found in current folder.")
-            return
-        for f in files:
-            console.print(f" • {f.name}")
+                elif command == "etl":
+                    files = args[1:] if len(args) > 1 else None
+                    paths = [Path(f) for f in files] if files else list(Path(".").glob("*.csv")) + list(Path(".").glob("*.xls*"))
+                    etl_files(paths)
 
-    def do_clear(self, arg: str):
-        """Clear the screen."""
-        console.clear()
+                elif command == "help":
+                    console.print("""
+[bold cyan]Available commands:[/bold cyan]
+  scan <file1> <file2> ...   - Scan datasets for overview
+  etl <file1> <file2> ...    - Run ETL cleaning on datasets
+  exit                        - Exit CLI
+""")
+                else:
+                    console.print(f"[red]Unknown command:[/red] {command}")
 
-    def do_exit(self, arg: str):
-        """Exit whitepaper shell and return to normal terminal."""
-        console.print("👋 Goodbye! Returning control to terminal.")
-        return True
+            except KeyboardInterrupt:
+                self.active = False
+                console.print("\n👋 Exiting Whitepaper Shell...", style="bold green")
 
-    def do_quit(self, arg: str):
-        """Alias for exit"""
-        return self.do_exit(arg)
-
-    def emptyline(self):
-        # don't repeat last command on empty line
-        pass
+    # Provide cmdloop for compatibility with callers expecting a cmd-like API
+    def cmdloop(self):
+        """Compatibility alias so callers can use .cmdloop() like cmd.Cmd."""
+        return self.run()
