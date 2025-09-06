@@ -3,9 +3,12 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "whitepaper"
+name = "whitepaper-scanner-cli"
 version = "0.1.0"
 description = "Whitepaper - Dataset scanner CLI for analysts and policymakers"
+authors = [
+    { name = "Vamsi Rajagiri" }
+]
 readme = "README.md"
 requires-python = ">=3.8"
 
