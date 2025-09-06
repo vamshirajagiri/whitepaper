@@ -2,7 +2,7 @@
 
 ## Overview
 
-Whitepaper is a powerful Command-Line Interface (CLI) tool designed for Extract, Transform, Load (ETL) operations and in-depth analysis of datasets, specifically tailored for policymakers in government bodies. Inspired by tools like Gemini CLI and Anthropic Claude Code, this tool leverages AI agents to automate data preprocessing and provide actionable insights through natural language interactions.
+Whitepaper is a powerful Command-Line Interface (CLI) tool designed for Extract, Transform, Load (ETL) operations and in-depth analysis of datasets, specifically designd for policymakers in government bodies. Inspired by tools like Gemini CLI and Anthropic Claude Code, this tool leverages AI agents to automate data preprocessing and provide actionable insights in Terminal through natural language interactions.
 
  Whitepaper enables users to navigate datasets, perform intelligent ETL tasks, and generate comprehensive analyses to support data-driven decision-making. The tool integrates multiple AI agents working collaboratively in the backend to ensure robust, accurate, and insightful results.
 
@@ -13,7 +13,7 @@ Whitepaper is a powerful Command-Line Interface (CLI) tool designed for Extract,
 - **Before/After Reporting**: Detailed reports on ETL changes with dataset overviews.
 - **Deep Analysis**: Comprehensive statistical and contextual analysis for policy decisions.
 - **Multi-Agent Backend**: Collaborative AI agents specializing in different aspects of data processing and analysis.
-- **CLI-Based**: Easy installation and use via command line, no GUI required.
+- **CLI-Based**: Easy installation and use via command line.
 - **Dataset Agnostic**: Works with various data formats (CSV, JSON, Excel, etc.).
 
 ## Technology Stack
