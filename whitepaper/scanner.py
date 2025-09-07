@@ -6,7 +6,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
-from .utils import console
+from .utils import console, calculate_file_hash
 
 def _read_table(path: Path):
     """Read CSV or Excel into a DataFrame with sensible defaults."""
@@ -68,6 +68,9 @@ def analyze_file(path: Path) -> dict:
 
     top_missing = (missing_per_col[missing_per_col > 0].sort_values(ascending=False).head(8).to_dict())
 
+    # Calculate file hash for caching
+    file_hash = calculate_file_hash(path)
+
     return {
         "file": path.name,
         "size_bytes": path.stat().st_size,
@@ -81,6 +84,7 @@ def analyze_file(path: Path) -> dict:
         "total_outliers": int(total_outliers),
         "mixed_type_cols": mixed_cols,
         "quality": float(quality),
+        "hash": file_hash,
     }
 
 def pretty_print(analysis: dict):

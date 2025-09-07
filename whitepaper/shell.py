@@ -20,7 +20,8 @@ class WhitepaperShell:
         """Check if cleaned datasets are available"""
         cleaned_dir = Path("cleaned-dataset")
         if cleaned_dir.exists():
-            csv_files = list(cleaned_dir.glob("*_cleaned.csv"))
+            # Look for both old and new naming patterns
+            csv_files = list(cleaned_dir.glob("*_cleaned*.csv"))
             self.cleaned_datasets_available = len(csv_files) > 0
             return len(csv_files)
         return 0
@@ -36,7 +37,8 @@ class WhitepaperShell:
         # Get cleaned datasets
         cleaned_dir = Path("cleaned-dataset")
         if cleaned_dir.exists():
-            cleaned_files = list(cleaned_dir.glob("*_cleaned.csv"))
+            # Look for both old and new naming patterns
+            cleaned_files = list(cleaned_dir.glob("*_cleaned*.csv"))
             datasets['cleaned'] = cleaned_files
         else:
             datasets['cleaned'] = []
@@ -126,7 +128,16 @@ class WhitepaperShell:
                 console.print("[yellow]⚠️ No CSV/Excel files found[/yellow]")
 
         elif command == "etl":
-            files = args[1:] if len(args) > 1 else None
+            # Check for overwrite flag
+            overwrite = False
+            files = []
+
+            for arg in args[1:]:
+                if arg == "--overwrite":
+                    overwrite = True
+                else:
+                    files.append(arg)
+
             if files:
                 # Find files in both current and cleaned directories
                 paths = []
@@ -142,8 +153,9 @@ class WhitepaperShell:
                 paths = datasets['raw']
 
             if paths:
-                console.print(f"[blue]🔧 Running ETL on {len(paths)} files...[/blue]")
-                etl_files(paths)
+                mode = "overwrite" if overwrite else "hash-based"
+                console.print(f"[blue]🔧 Running ETL on {len(paths)} files (mode: {mode})...[/blue]")
+                etl_files(paths, overwrite=overwrite)
                 self._check_cleaned_datasets()  # Update availability
             else:
                 console.print("[yellow]⚠️ No raw CSV/Excel files found to process[/yellow]")
@@ -183,11 +195,18 @@ class WhitepaperShell:
             help_text = """
 [bold cyan]Available Commands:[/bold cyan]
   scan <file1> <file2> ...    - Scan datasets for overview (works with raw/cleaned)
-  etl <file1> <file2> ...     - Run ETL cleaning on datasets
+  etl <file1> <file2> ...     - Run ETL cleaning on datasets (hash-based caching)
+  etl --overwrite <files>     - Run ETL with overwrite mode (keeps latest version)
   list / datasets             - List all available datasets (raw + cleaned)
   status                      - Show system status
   help                        - Show this help
   exit                        - Exit terminal
+
+[bold green]ETL Features:[/bold green]
+  • Hash-based caching prevents duplicate processing
+  • Unique cleaned files for each dataset version
+  • Skip ETL if no changes detected
+  • Use --overwrite to keep only latest cleaned version
 
 [bold green]🤖 AI Agent Features:[/bold green]
   • Only uses cleaned datasets for analysis
@@ -219,7 +238,14 @@ class WhitepaperShell:
             try:
                 # Use the simple multi-agent analysis
                 result = self.agent.analyze_policy_query(query)
-                if not result:
+                if result:
+                    # Display the final response
+                    console.print("\n" + "="*60, style="bold green")
+                    console.print("[bold green]🎯 ANALYSIS RESULTS[/bold green]")
+                    console.print("="*60, style="bold green")
+                    console.print(f"\n{result}\n")
+                    console.print("="*60, style="dim")
+                else:
                     console.print("[red]❌ Analysis failed to produce results[/red]")
             except Exception as e:
                 console.print(f"[red]❌ AI Analysis failed: {e}[/red]")
