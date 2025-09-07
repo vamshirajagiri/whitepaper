@@ -60,6 +60,9 @@ whitepaper> Show me correlations in the data
 
 [![asciicast](https://asciinema.org/a/7RFxJEZ2cvMhQFbs1ZNBCqVdb.svg)](https://asciinema.org/a/7RFxJEZ2cvMhQFbs1ZNBCqVdb)
 
+demo google drive link:
+https://drive.google.com/file/d/1t2tq9OKqdwhGp-2Gpg9UmmRKLtX0JNAN/view?usp=sharings
+
 ## 🏗️ Enterprise Architecture
 
 ### Elite AI Policy Analyst System
