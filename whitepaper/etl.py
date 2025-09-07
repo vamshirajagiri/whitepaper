@@ -8,6 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 from typing import List
 import os
+from .utils import calculate_file_hash, extract_hash_from_filename
 
 console = Console()
 
@@ -60,13 +61,27 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def etl_file(file_path: Path, detailed=True):
-    """ETL for single dataset with rich terminal output"""
+def etl_file(file_path: Path, detailed=True, overwrite=False):
+    """ETL for single dataset with rich terminal output and hash-based caching"""
     try:
         df = pd.read_excel(file_path) if file_path.suffix in [".xls", ".xlsx"] else pd.read_csv(file_path)
     except Exception as e:
         console.print(f"[red]Failed to read {file_path.name}: {e}[/red]")
         return None
+
+    # Calculate hash of original file
+    current_hash = calculate_file_hash(file_path)
+
+    # Check for existing cleaned files with matching hash (only if not in overwrite mode)
+    if not overwrite:
+        base_name = file_path.stem
+        existing_cleaned_files = list(CLEANED_DIR.glob(f"{base_name}_cleaned_*.csv"))
+
+        for existing_file in existing_cleaned_files:
+            stored_hash = extract_hash_from_filename(existing_file.name)
+            if stored_hash == current_hash[:8]:
+                console.print(f"[yellow]✔ Skipping ETL, no changes detected for {file_path.name}[/yellow]")
+                return None
 
     # Check if file is already cleaned and warn user
     is_already_cleaned = "_cleaned" in file_path.stem
@@ -104,21 +119,16 @@ def etl_file(file_path: Path, detailed=True):
             if step == "Outlier Detection":
                 outliers = flag_outliers(df)
             elif step == "Saving":
-                # Smart file naming for re-processed files
-                if is_already_cleaned:
-                    # Find the next available incremental number
-                    base_name = file_path.stem.replace('_cleaned', '')
-                    counter = 1
-                    while True:
-                        cleaned_file = CLEANED_DIR / f"{base_name}_cleaned({counter}).csv"
-                        if not cleaned_file.exists():
-                            break
-                        counter += 1
-                    console.print(f"[green]💾 Saving as: {cleaned_file.name}[/green]")
+                # Use hash-based naming convention
+                if overwrite:
+                    # Overwrite mode: keep latest cleaned version
+                    cleaned_file = CLEANED_DIR / f"{file_path.stem}_cleaned_latest.csv"
                 else:
-                    cleaned_file = CLEANED_DIR / f"{file_path.stem}_cleaned.csv"
+                    # Hash-based naming: create unique version for each hash
+                    cleaned_file = CLEANED_DIR / f"{file_path.stem}_cleaned_{current_hash[:8]}.csv"
 
                 df.to_csv(cleaned_file, index=False)
+                console.print(f"[green]✅ Successfully cleaned and saved: {cleaned_file.name}[/green]")
             else:
                 df = clean_dataframe(df)
             progress.advance(task, 1)
@@ -144,8 +154,8 @@ def etl_file(file_path: Path, detailed=True):
 
     return df
 
-def etl_files(paths: List[Path]):
+def etl_files(paths: List[Path], overwrite=False):
     """ETL multiple files with multi-file UX handling"""
     detailed = True if len(paths) <= 7 else False
     for path in paths:
-        etl_file(path, detailed=detailed)
+        etl_file(path, detailed=detailed, overwrite=overwrite)
