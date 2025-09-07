@@ -8,7 +8,11 @@ from rich.panel import Panel
 from rich.table import Table
 from typing import List
 import os
-from .utils import calculate_file_hash, extract_hash_from_filename
+try:
+    from .utils import calculate_file_hash, extract_hash_from_filename
+except ImportError:
+    # Fallback for direct imports
+    from utils import calculate_file_hash, extract_hash_from_filename
 
 console = Console()
 

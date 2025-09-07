@@ -5,16 +5,24 @@ from rich.panel import Panel
 from .scanner import scan_files
 from .etl import etl_files
 from .agent import WhitepaperMultiAgent
+from .agents import HubSpokeSystem
+from .ui.cyberpunk_terminal import cyber_terminal
 
 console = Console()
 
 class WhitepaperShell:
-    def __init__(self):
+    def __init__(self, use_hub_spoke=True):
         self.active = True
         self.agent = None
+        self.hub_spoke_system = None
+        self.use_hub_spoke = use_hub_spoke
         self.cleaned_datasets_available = False
-        console.print("🚀 Whitepaper AI-Powered Data Analysis Terminal", style="bold cyan")
-        console.print("💡 Type natural language queries or use commands like 'scan dataset.csv'\n", style="dim")
+        # Cyberpunk neural network introduction
+        if use_hub_spoke:
+            cyber_terminal.matrix_intro()
+        else:
+            console.print("🤖 Legacy 3-Agent System Ready", style="bold green")
+            console.print("💡 Type natural language queries or use commands like 'scan dataset.csv'\n", style="dim")
 
     def _check_cleaned_datasets(self):
         """Check if cleaned datasets are available"""
@@ -80,20 +88,35 @@ class WhitepaperShell:
 
     def _is_command(self, text: str) -> bool:
         """Check if input is a command or natural language query"""
-        commands = ['scan', 'etl', 'help', 'exit', 'list', 'datasets', 'status']
+        commands = ['scan', 'etl', 'help', 'exit', 'list', 'datasets', 'status', 'toggle', 'demo', 'monitor', 'logs', 'traces', 'performance', 'agents']
         first_word = text.strip().split()[0].lower() if text.strip() else ""
         return first_word in commands or text.strip().endswith('.csv') or text.strip().endswith('.xls') or text.strip().endswith('.xlsx')
 
+
     def _initialize_agent(self):
-        """Initialize the AI agent if not already done"""
-        if not self.agent:
-            console.print("[green]🤖 Initializing Multi-Agent System...[/green]")
+        """Initialize the AI agent system"""
+        if self.use_hub_spoke and not self.hub_spoke_system:
+            console.print("[green]🚀 Initializing 9-Agent Hub-Spoke System...[/green]")
             try:
-                self.agent = WhitepaperMultiAgent()
-                console.print("[green]✅ AI Agent ready![/green]")
+                self.hub_spoke_system = HubSpokeSystem()
+                console.print("[green]✅ Hub-Spoke System ready![/green]")
             except Exception as e:
-                console.print(f"[red]❌ Failed to initialize AI Agent: {e}[/red]")
-                console.print("[yellow]💡 You can still use basic commands[/yellow]")
+                console.print(f"[red]❌ Failed to initialize Hub-Spoke System: {e}[/red]")
+                console.print("[yellow]💡 Falling back to legacy system...[/yellow]")
+                self.use_hub_spoke = False
+                self._initialize_legacy_agent()
+        elif not self.use_hub_spoke and not self.agent:
+            self._initialize_legacy_agent()
+    
+    def _initialize_legacy_agent(self):
+        """Initialize legacy 3-agent system"""
+        console.print("[green]🤖 Initializing Legacy Multi-Agent System...[/green]")
+        try:
+            self.agent = WhitepaperMultiAgent()
+            console.print("[green]✅ Legacy AI Agent ready![/green]")
+        except Exception as e:
+            console.print(f"[red]❌ Failed to initialize AI Agent: {e}[/red]")
+            console.print("[yellow]💡 You can still use basic commands[/yellow]")
 
     def _handle_command(self, cmd: str):
         """Handle traditional CLI commands"""
@@ -182,15 +205,69 @@ class WhitepaperShell:
             else:
                 console.print("[yellow]📭 No datasets found. Add CSV/Excel files to current directory.[/yellow]")
 
+        elif command == "demo":
+            console.print("[green]🚀 Launching Multi-Agent Demo System...[/green]")
+            try:
+                import sys
+                import asyncio
+                from pathlib import Path
+                
+                # Add project root to path
+                project_root = Path(__file__).parent.parent
+                sys.path.insert(0, str(project_root))
+                
+                from demo_agent_system import demo_main
+                asyncio.run(demo_main())
+            except ImportError as e:
+                console.print(f"[red]❌ Demo system not available: {e}[/red]")
+                console.print("[yellow]Run: pip install rich langchain-openai[/yellow]")
+            except Exception as e:
+                console.print(f"[red]❌ Demo error: {e}[/red]")
+
         elif command == "status":
             cleaned_count = self._check_cleaned_datasets()
+            
+            # Enhanced status with hub-spoke info
+            agent_status = "❌ Not initialized"
+            if self.use_hub_spoke and self.hub_spoke_system:
+                agent_status = "✅ 9-Agent Hub-Spoke Ready"
+            elif self.agent:
+                agent_status = "✅ Legacy 3-Agent Ready"
+            
             status_info = f"""
-🤖 AI Agent: {'✅ Ready' if self.agent else '❌ Not initialized'}
+🤖 AI Agent System: {agent_status}
 📊 Cleaned Datasets: {cleaned_count} available
-💾 Vector DB: {'✅ Ready' if self.agent and hasattr(self.agent, 'vectorstore') and self.agent.vectorstore else '❌ Not indexed'}
+💾 Vector DB: {'✅ Ready' if (self.agent and hasattr(self.agent, 'vectorstore') and self.agent.vectorstore) else '❌ Not indexed'}
+🚀 Hub-Spoke Mode: {'✅ Active' if self.use_hub_spoke else '❌ Legacy Mode'}
             """
             console.print(Panel(status_info.strip(), title="System Status", border_style="blue"))
 
+        elif command == "toggle":
+            # Toggle between hub-spoke and legacy mode
+            self.use_hub_spoke = not self.use_hub_spoke
+            mode = "9-Agent Hub-Spoke" if self.use_hub_spoke else "Legacy 3-Agent"
+            console.print(f"[green]✅ Switched to {mode} system[/green]")
+            console.print(f"[yellow]💡 Your next query will use the {mode} system[/yellow]")
+            
+            # Reset agents to force re-initialization
+            self.agent = None
+            self.hub_spoke_system = None
+        
+        elif command == "monitor":
+            console.print("[bright_cyan]▸ Neural Nexus Monitoring Dashboard[/bright_cyan]")
+            console.print("[dim]Real-time monitoring would show here...[/dim]")
+            console.print("[yellow]💡 Full monitoring dashboard coming soon![/yellow]")
+        
+        elif command == "logs":
+            console.print("[bright_cyan]▸ Neural Network Logs[/bright_cyan]") 
+            console.print("[dim]Agent communication logs would show here...[/dim]")
+            console.print("[yellow]💡 Structured logging system coming soon![/yellow]")
+        
+        elif command == "traces":
+            console.print("[bright_cyan]▸ Quantum Trace Analysis[/bright_cyan]")
+            console.print("[dim]Distributed traces would show here...[/dim]")
+            console.print("[yellow]💡 Trace analysis system coming soon![/yellow]")
+        
         elif command == "help":
             help_text = """
 [bold cyan]Available Commands:[/bold cyan]
@@ -198,7 +275,15 @@ class WhitepaperShell:
   etl <file1> <file2> ...     - Run ETL cleaning on datasets (hash-based caching)
   etl --overwrite <files>     - Run ETL with overwrite mode (keeps latest version)
   list / datasets             - List all available datasets (raw + cleaned)
-  status                      - Show system status
+  status                      - Show system status (including hub-spoke mode)
+  toggle                      - Switch between 9-Agent Hub-Spoke & Legacy systems
+  
+[bold magenta]Cyberpunk Observability:[/bold magenta]
+  monitor                     - Neural Nexus monitoring dashboard ⚡
+  logs                        - Agent communication logs 📋
+  traces                      - Quantum trace analysis 🔍
+  
+  demo                        - Launch Multi-Agent Demo System 🚀
   help                        - Show this help
   exit                        - Exit terminal
 
@@ -209,10 +294,12 @@ class WhitepaperShell:
   • Use --overwrite to keep only latest cleaned version
 
 [bold green]🤖 AI Agent Features:[/bold green]
-  • Only uses cleaned datasets for analysis
-  • Auto-selects datasets based on your query
-  • Asks for selection if >5 datasets available
-  • Cross-sector analysis for ≤5 datasets
+  • 9-Agent Hub-Spoke: Cost-optimized (GPT-3.5 routing + GPT-4 analysis)
+  • Cyberpunk neural network interface with Matrix-style effects
+  • Real-time agent communication: 🧠 Neural Interface, ⚡ Quantum Router
+  • Query validation & professional rejection system
+  • Auto-selects datasets and web search based on query
+  • Legacy 3-Agent system available as fallback
 
 [bold green]Natural Language Queries:[/bold green]
   • "Analyze agricultural trends and provide policy recommendations"
@@ -229,19 +316,36 @@ class WhitepaperShell:
             console.print("[dim]Type 'help' for available commands[/dim]")
 
     def _handle_natural_language(self, query: str):
-        """Handle natural language queries with enterprise AI agent"""
-        if not self.agent:
-            self._initialize_agent()
+        """Handle natural language queries with AI agent system"""
+        self._initialize_agent()
 
-        if self.agent:
-            console.print("[blue]🤖 Processing with Multi-Agent System...[/blue]")
+        if self.use_hub_spoke and self.hub_spoke_system:
+            console.print("[blue]🚀 Processing with 9-Agent Hub-Spoke System...[/blue]")
             try:
-                # Use the simple multi-agent analysis
+                # Use the new hub-spoke system
+                result = self.hub_spoke_system.analyze_query(query)
+                if result:
+                    # Display the final response with enhanced formatting
+                    console.print("\n" + "="*70, style="bold cyan")
+                    console.print("[bold cyan]🎯 HUB-SPOKE ANALYSIS RESULTS[/bold cyan]")
+                    console.print("="*70, style="bold cyan")
+                    console.print(f"\n{result}\n")
+                    console.print("="*70, style="dim")
+                else:
+                    console.print("[red]❌ Hub-Spoke analysis failed to produce results[/red]")
+            except Exception as e:
+                console.print(f"[red]❌ Hub-Spoke Analysis failed: {e}[/red]")
+                console.print("[yellow]💡 Falling back to legacy system...[/yellow]")
+                self.use_hub_spoke = False
+                self._handle_natural_language(query)  # Retry with legacy
+        elif self.agent:
+            console.print("[blue]🤖 Processing with Legacy Multi-Agent System...[/blue]")
+            try:
+                # Use the legacy system
                 result = self.agent.analyze_policy_query(query)
                 if result:
-                    # Display the final response
                     console.print("\n" + "="*60, style="bold green")
-                    console.print("[bold green]🎯 ANALYSIS RESULTS[/bold green]")
+                    console.print("[bold green]🎯 LEGACY ANALYSIS RESULTS[/bold green]")
                     console.print("="*60, style="bold green")
                     console.print(f"\n{result}\n")
                     console.print("="*60, style="dim")

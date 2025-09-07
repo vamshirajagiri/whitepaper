@@ -6,7 +6,11 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
-from .utils import console, calculate_file_hash
+try:
+    from .utils import console, calculate_file_hash
+except ImportError:
+    # Fallback for direct imports
+    from utils import console, calculate_file_hash
 
 def _read_table(path: Path):
     """Read CSV or Excel into a DataFrame with sensible defaults."""
