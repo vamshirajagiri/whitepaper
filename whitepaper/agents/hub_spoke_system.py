@@ -3,6 +3,7 @@
 Hub-and-Spoke System using LangGraph
 Orchestrates 9-Agent workflow with conditional routing
 """
+import os
 import time
 from pathlib import Path
 from typing import Dict, Any, Literal
@@ -19,17 +20,9 @@ from .nine_agents import (
     DatasetHandlerAgent, WebSearcherAgent, AnalysisStatsAgent,
     AnalysisVizAgent, AnalysisInsightsAgent, CheckerAgent
 )
-try:
-    from whitepaper.ui.cyberpunk_terminal import cyber_terminal
-except ImportError:
-    # Fallback if import fails
-    class MockCyberTerminal:
-        def agent_activation(self, *args): pass
-        def neural_loading(self, *args): pass
-        def data_stream_effect(self, *args): pass
-        def system_status(self, *args): pass
-        def neural_progress(self, *args): pass
-    cyber_terminal = MockCyberTerminal()
+# Simple progress display
+def show_progress(message):
+    console.print(f"[cyan]{message}[/cyan]")
 
 console = Console()
 
@@ -41,13 +34,24 @@ class HubSpokeSystem:
     """
     
     def __init__(self):
+        # Early API key validation to provide better error messages
+        api_key_valid, api_key_message = self._validate_api_key()
+        if not api_key_valid:
+            console.print(f"[yellow]⚠️ Warning: {api_key_message}[/yellow]")
+            console.print("[dim]Hub-Spoke system will initialize but agents won't work without valid API key[/dim]")
+            # Set a temporary API key to allow initialization
+            os.environ["OPENAI_API_KEY"] = "temp-key-for-initialization"
+            self._api_key_missing = True
+        else:
+            self._api_key_missing = False
+        
         self.agents = self._initialize_agents()
         self.workflow = self._create_workflow()
         self.app = self.workflow.compile()
         
     def _initialize_agents(self) -> Dict[AgentType, Any]:
         """Initialize all 9 agents"""
-        cyber_terminal.neural_loading("⚡ Neural Network Initializing", 1.5)
+        show_progress("⚡ Initializing 9-Agent System...")
         
         agents = {
             AgentType.USER_FACING: UserFacingAgent(),
@@ -61,8 +65,7 @@ class HubSpokeSystem:
             AgentType.CHECKER: CheckerAgent()
         }
         
-        cyber_terminal.agent_activation("Neural Network", "ONLINE")
-        cyber_terminal.data_stream_effect("AGENTS", len(agents))
+        show_progress(f"✅ {len(agents)} agents initialized successfully")
         return agents
         
     def _create_workflow(self) -> StateGraph:
@@ -142,6 +145,31 @@ class HubSpokeSystem:
         else:
             return "analysis_stats"  # Default to analysis
     
+    def _validate_api_key(self) -> tuple[bool, str]:
+        """Validate if OpenAI API key is available and properly formatted"""
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            return False, (
+                "🔑 OpenAI API key not found. Please set your OPENAI_API_KEY environment variable.\n"
+                "\nTo fix this issue:\n"
+                "1. Get your API key from: https://platform.openai.com/account/api-keys\n"
+                "2. Set it in your terminal: export OPENAI_API_KEY='your-key-here'\n"
+                "3. Or create a .env file with: OPENAI_API_KEY=your-key-here\n"
+                "\nWithout an API key, the AI agents cannot analyze your data."
+            )
+        
+        if api_key.startswith("sk-") and len(api_key) > 20:
+            return True, "API key format looks valid"
+        elif len(api_key) < 20:
+            return False, (
+                "🔑 OpenAI API key appears to be incomplete or invalid.\n"
+                "Please verify your API key is correctly set. It should start with 'sk-' and be much longer."
+            )
+        else:
+            # May be valid, let the API call determine
+            return True, "API key detected (format validation passed)"
+    
     def analyze_query(self, query: str) -> str:
         """
         Main entry point for query analysis
@@ -152,7 +180,19 @@ class HubSpokeSystem:
         Returns:
             Final analysis report
         """
-        cyber_terminal.neural_loading("🔍 Query Analysis Initiated", 1.0)
+        # Check if API key was missing during initialization or validate again
+        if hasattr(self, '_api_key_missing') and self._api_key_missing:
+            # Re-validate in case user has set the key since initialization
+            api_key_valid, api_key_message = self._validate_api_key()
+            if not api_key_valid:
+                console.print(f"[red]❌ API Key Issue:[/red]")
+                console.print(Panel(api_key_message, title="🔑 OpenAI API Key Required", border_style="red"))
+                return api_key_message
+            else:
+                # API key is now valid, update the flag
+                self._api_key_missing = False
+        
+        show_progress("🔍 Starting query analysis...")
         
         # Initialize state
         initial_state: MultiAgentState = {
@@ -178,13 +218,13 @@ class HubSpokeSystem:
         }
         
         try:
-            # Execute the workflow with cyberpunk styling
-            cyber_terminal.neural_progress("🤖 Deep Learning Protocols Active", 50)
+            # Execute the workflow
+            show_progress("🤖 9-Agent workflow executing...")
             
             # Run the workflow
             final_state = self.app.invoke(initial_state)
             
-            cyber_terminal.agent_activation("Analysis Matrix", "COMPLETE")
+            show_progress("✅ Analysis complete!")
             
             # Display cost summary
             self._display_cost_summary(final_state)
@@ -201,13 +241,10 @@ class HubSpokeSystem:
         costs = state.get("model_costs", {})
         execution_time = time.time() - state.get("start_time", time.time())
         agent_count = len(state.get("agent_messages", []))
+        total_cost = costs.get('standard', 0) * 0.002 + costs.get('premium', 0) * 0.03
         
-        # Cyberpunk-style system status
-        cyber_terminal.system_status(
-            agents_active=agent_count,
-            cost=costs.get('standard', 0) * 0.002 + costs.get('premium', 0) * 0.03,
-            duration=execution_time
-        )
+        console.print(f"[green]✅ Analysis completed in {execution_time:.1f}s[/green]")
+        console.print(f"[blue]💰 Estimated cost: ${total_cost:.4f} | Agents used: {agent_count}[/blue]")
 
     def get_agent_status(self) -> Dict[str, Any]:
         """Get system status for debugging"""

@@ -11,17 +11,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from .state import MultiAgentState, AgentMessage, AgentType
 from .models import get_agent_model, get_model_cost_tier
-try:
-    from whitepaper.ui.cyberpunk_terminal import cyber_terminal
-except ImportError:
-    # Fallback if import fails
-    class MockCyberTerminal:
-        def agent_activation(self, *args): pass
-        def neural_loading(self, *args): pass
-        def data_stream_effect(self, *args): pass
-        def system_status(self, *args): pass
-        def neural_progress(self, *args): pass
-    cyber_terminal = MockCyberTerminal()
 
 console = Console()
 
@@ -46,9 +35,9 @@ class BaseAgent(ABC):
         new_messages = state.get("agent_messages", []) + [message]
         state["agent_messages"] = new_messages
         
-        # Cyberpunk-style agent communication
-        action = "ROUTING" if "forwarding" in content.lower() else "PROCESSING"
-        cyber_terminal.agent_activation(self.agent_type.value, action)
+        # Show agent communication
+        action = "routing" if "forwarding" in content.lower() else "processing"
+        console.print(f"[dim]▸ {self.agent_type.value}: {action}[/dim]")
         
         # Track costs
         if "model_costs" not in state:
@@ -60,18 +49,46 @@ class BaseAgent(ABC):
     def execute_with_prompt(self, query: str, context: str = "") -> str:
         """Execute agent with system prompt and query"""
         try:
+            # Escape any curly braces in context to prevent template variable conflicts
+            safe_context = context.replace("{", "{{").replace("}", "}}")
+            safe_query = query.replace("{", "{{").replace("}", "}}")
+            
             prompt = ChatPromptTemplate.from_messages([
                 ("system", self.system_prompt),
-                ("human", f"Context: {context}\n\nQuery: {query}")
+                ("human", f"Context: {safe_context}\n\nQuery: {safe_query}")
             ])
             
             chain = prompt | self.model
-            response = chain.invoke({"query": query, "context": context})
+            response = chain.invoke({})
             return response.content
             
         except Exception as e:
+            error_msg = str(e)
             console.print(f"[red]❌ {self.agent_type.value} failed: {e}[/red]")
-            return f"Error in {self.agent_type.value}: {str(e)}"
+            
+            # Check for API key issues and provide better error messages
+            if "401" in error_msg and "api key" in error_msg.lower():
+                return self._get_api_key_error_message()
+            elif "api key" in error_msg.lower() or "openai_api_key" in error_msg.lower():
+                return self._get_api_key_error_message()
+            else:
+                return self._get_generic_error_message(error_msg)
+    
+    def _get_api_key_error_message(self) -> str:
+        """Get user-friendly message for API key issues"""
+        return (
+            f"🔑 {self.agent_type.value} requires a valid OpenAI API key to provide analysis. "
+            "Please set your OPENAI_API_KEY environment variable and try again. "
+            "You can get an API key from https://platform.openai.com/account/api-keys"
+        )
+    
+    def _get_generic_error_message(self, error_msg: str) -> str:
+        """Get user-friendly message for generic errors"""
+        return (
+            f"⚠️ {self.agent_type.value} encountered an issue and cannot provide analysis at this time. "
+            f"This might be due to network connectivity, API limits, or system configuration. "
+            f"Technical details: {error_msg[:100]}{'...' if len(error_msg) > 100 else ''}"
+        )
     
     @abstractmethod
     def execute(self, state: MultiAgentState) -> MultiAgentState:
